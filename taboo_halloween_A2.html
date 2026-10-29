@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TABOO – Halloween &amp; Everyday Life</title>
+<style>
+:root{
+  --bg:#1e1b4b; --bg2:#312e81; --accent:#6366f1; --accent2:#f59e0b;
+  --cardbg:#ffffff; --cardink:#111827; --chip:#4f46e5;
+  --taboo:#dc2626; --tabooBg:#fef2f2; --tabooInk:#7f1d1d;
+  --panel:rgba(255,255,255,.10); --panelInk:#ffffff;
+  --teamA:#2563eb; --teamB:#db2777; --ok:#16a34a;
+}
+body[data-cat="halloween"]{
+  --bg:#12081f; --bg2:#2e1048; --accent:#f97316; --accent2:#a855f7;
+  --cardbg:#1c0f2e; --cardink:#ffedd5; --chip:#ea580c;
+  --tabooBg:rgba(0,0,0,.45); --tabooInk:#fed7aa; --taboo:#f97316;
+}
+body[data-cat="everyday"]{
+  --bg:#0c2e44; --bg2:#0f5a7a; --accent:#0ea5e9; --accent2:#22c55e;
+  --cardbg:#ffffff; --cardink:#0f172a; --chip:#0369a1;
+}
+body[data-cat="feelings"]{
+  --bg:#3a0f2d; --bg2:#701a55; --accent:#ec4899; --accent2:#facc15;
+  --cardbg:#ffffff; --cardink:#1f1020; --chip:#be185d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--panelInk); min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 100%);
+}
+button,select{font:inherit}
+button{
+  cursor:pointer; border:none; border-radius:14px; min-height:56px;
+  padding:10px 18px; font-size:1.1rem; font-weight:700;
+  background:#ffffff; color:#111827; box-shadow:0 3px 0 rgba(0,0,0,.25);
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+button:focus-visible,select:focus-visible{outline:4px solid var(--accent2);outline-offset:2px}
+button.primary{background:var(--accent);color:#fff}
+button.ghost{background:rgba(255,255,255,.15);color:#fff;box-shadow:none;border:2px solid rgba(255,255,255,.35)}
+button.small{min-height:44px;font-size:1rem;padding:6px 14px}
+select{
+  min-height:52px;border-radius:12px;border:2px solid rgba(255,255,255,.35);
+  background:rgba(0,0,0,.25);color:#fff;padding:6px 12px;font-size:1.05rem;font-weight:600;
+}
+select option{color:#111;background:#fff}
+
+/* Halloween decorations */
+.deco{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;display:none}
+body[data-cat="halloween"] .deco{display:block}
+.deco span{position:absolute;opacity:.13;font-size:4rem;user-select:none}
+
+header{
+  position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;padding:12px 16px;
+}
+header h1{margin:0;font-size:clamp(1.3rem,3vw,2rem);letter-spacing:.06em}
+header h1 .t{color:var(--accent2)}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+main{position:relative;z-index:1;padding:0 16px 24px;max-width:1500px;margin:0 auto}
+
+/* Start screen */
+#startScreen{max-width:900px;margin:10px auto;text-align:center}
+.box{background:var(--panel);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:20px}
+#startScreen h2{font-size:clamp(1.6rem,4vw,2.6rem);margin:.2em 0}
+#startScreen p{font-size:1.15rem;line-height:1.5}
+.rules{text-align:left;font-size:1.1rem;line-height:1.55;margin:10px auto;max-width:720px}
+.rules li{margin:4px 0}
+.label{font-size:1.15rem;font-weight:700;margin:18px 0 8px}
+.catGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.catBtn{min-height:84px;font-size:1.15rem;line-height:1.25}
+.catBtn small{display:block;font-weight:500;font-size:.9rem;opacity:.8}
+.catBtn.sel{outline:5px solid var(--accent2);outline-offset:2px}
+.catBtn[data-cat="halloween"]{background:#2e1048;color:#fdba74}
+.catBtn[data-cat="everyday"]{background:#0369a1;color:#fff}
+.catBtn[data-cat="feelings"]{background:#be185d;color:#fff}
+.catBtn[data-cat="all"]{background:#fff;color:#111}
+.durRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.durBtn.sel{background:var(--accent2);color:#111}
+#startBtn{margin-top:22px;font-size:1.6rem;min-height:72px;padding:12px 48px;background:var(--accent2);color:#111}
+
+/* Game screen */
+#gameScreen{display:none}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.counter{font-weight:700;font-size:1.15rem;margin-left:auto;background:rgba(0,0,0,.25);padding:10px 14px;border-radius:12px}
+.layout{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:1000px){ .layout{grid-template-columns:minmax(0,1fr) 340px} }
+
+.card{
+  background:var(--cardbg);color:var(--cardink);border-radius:26px;
+  padding:clamp(16px,3vw,36px);box-shadow:0 12px 30px rgba(0,0,0,.35);
+  border:4px solid var(--accent);text-align:center;position:relative;
+  min-height:clamp(320px,52vh,640px);display:flex;flex-direction:column;justify-content:center;
+}
+.chip{
+  display:inline-block;align-self:center;background:var(--chip);color:#fff;font-weight:700;
+  padding:6px 16px;border-radius:999px;font-size:clamp(.95rem,1.6vw,1.2rem);letter-spacing:.04em
+}
+.word{
+  font-size:clamp(2.6rem,9vw,7.5rem);font-weight:900;line-height:1.05;margin:18px 0 22px;
+  letter-spacing:.01em;word-break:break-word;text-transform:uppercase;
+}
+body[data-cat="halloween"] .word{color:#fb923c;text-shadow:0 0 18px rgba(249,115,22,.45)}
+.tabooBox{
+  border:3px dashed var(--taboo);background:var(--tabooBg);color:var(--tabooInk);
+  border-radius:18px;padding:12px 16px;max-width:820px;margin:0 auto;width:100%;
+}
+.tabooHead{font-weight:900;color:var(--taboo);letter-spacing:.12em;font-size:clamp(1rem,2vw,1.35rem)}
+.tabooHead small{display:block;letter-spacing:0;font-weight:600;font-size:.8em;opacity:.85}
+.tabooList{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.tabooList li{
+  font-size:clamp(1.3rem,3.2vw,2.3rem);font-weight:800;padding:4px 14px;border-radius:10px;
+  background:rgba(220,38,38,.10);
+}
+body[data-cat="halloween"] .tabooList li{background:rgba(249,115,22,.15)}
+.hiddenNote{font-size:1.3rem;font-weight:700;padding:14px;opacity:.75}
+.cardBtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.cardBtns button{min-width:140px}
+.navBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.navBtns button{min-height:66px;font-size:1.2rem}
+#skipBtn{background:#facc15;color:#111}
+#nextBtn{background:var(--accent);color:#fff}
+
+#endBox{display:none}
+#endBox h2{font-size:clamp(2rem,5vw,3.5rem);margin:.2em 0}
+#endBox p{font-size:1.25rem}
+
+/* Side panel */
+.side{display:flex;flex-direction:column;gap:16px}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.team{border-radius:18px;padding:12px;text-align:center;color:#fff}
+.team.A{background:var(--teamA)}
+.team.B{background:var(--teamB)}
+.team h3{margin:0;font-size:1.3rem}
+.score{font-size:clamp(3rem,7vw,4.5rem);font-weight:900;line-height:1.1}
+.team .plus{width:100%;font-size:1.3rem;min-height:64px;background:#fff;color:#111}
+.team .minus{margin-top:8px;width:100%;min-height:40px;font-size:.95rem;background:rgba(0,0,0,.25);color:#fff;box-shadow:none}
+.timerBox{text-align:center}
+.timerBox h3{margin:0 0 4px;font-size:1.2rem}
+#timeDisplay{font-size:clamp(3.2rem,8vw,5rem);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1}
+#timeDisplay.low{color:#fca5a5}
+#timeDisplay.over{color:#f87171}
+.timerBtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.durRowSmall{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.durRowSmall button{flex:1}
+.stats{font-size:1rem;opacity:.9;text-align:center}
+
+/* Time's up overlay + modal + toast */
+#timesUp{
+  position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.75);flex-direction:column;gap:20px;text-align:center;padding:20px
+}
+#timesUp div{font-size:clamp(3rem,12vw,8rem);font-weight:900;color:#fbbf24}
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:16px}
+.modalInner{background:#fff;color:#111;border-radius:20px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:22px;font-size:1.1rem;line-height:1.55}
+.modalInner h2{margin-top:0}
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;
+  background:#111;color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;font-size:1.1rem;
+  display:none;max-width:90vw;text-align:center
+}
+@media (max-width:600px){
+  .navBtns button{font-size:1.05rem;padding:8px}
+  .cardBtns button{min-width:0;flex:1}
+  .toolbar select{flex:1}
+  .counter{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body data-cat="all">
+
+<div class="deco" aria-hidden="true">
+  <span style="top:6%;left:4%">🎃</span><span style="top:14%;right:6%">🦇</span>
+  <span style="bottom:10%;left:8%">👻</span><span style="bottom:18%;right:10%">🎃</span>
+  <span style="top:48%;left:46%;font-size:6rem">🦇</span><span style="top:70%;left:30%">🕷️</span>
+</div>
+
+<header>
+  <h1><span class="t">TABOO</span> · Halloween &amp; Everyday Life</h1>
+  <div class="hbtns">
+    <button class="ghost small" id="musicBtn" type="button" aria-pressed="false">🎵 Music: Off</button>
+    <button class="ghost small" id="sfxBtn" type="button" aria-pressed="true">🔊 Sounds: On</button>
+    <button class="ghost small" id="plBtn" type="button">🇵🇱 Instrukcja</button>
+    <button class="ghost small" id="resetBtn" type="button">↺ Reset Game</button>
+  </div>
+</header>
+
+<main>
+  <!-- START SCREEN -->
+  <section id="startScreen" class="box">
+    <h2>Welcome to TABOO! 🎃</h2>
+    <ol class="rules">
+      <li>Play in two teams: <b>Team A</b> and <b>Team B</b>.</li>
+      <li>One player explains the word on the card <b>in English</b>.</li>
+      <li>Don't say the word itself and don't say the <b>TABOO WORDS</b>.</li>
+      <li>No gestures, no Polish, no spelling the word!</li>
+      <li>Your team guesses the word → the team gets <b>+1 point</b>.</li>
+      <li>Said a taboo word? Too difficult? → <b>Skip</b> the card.</li>
+    </ol>
+
+    <div class="label">1. Choose a category</div>
+    <div class="catGrid" id="catGrid"></div>
+
+    <div class="label">2. Timer for one turn</div>
+    <div class="durRow" id="durRowStart"></div>
+
+    <button id="startBtn" type="button">▶ Start Game</button>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="gameScreen">
+    <div class="toolbar">
+      <select id="catSelect" aria-label="Choose category"></select>
+      <button class="ghost" id="shuffleBtn" type="button">🔀 Shuffle Cards</button>
+      <div class="counter" id="counter">Card 1 / 50</div>
+    </div>
+
+    <div class="layout">
+      <div>
+        <div class="card" id="cardBox">
+          <span class="chip" id="cardCat">Halloween</span>
+          <div class="word" id="cardWord">pumpkin</div>
+          <div class="tabooBox" id="tabooBox">
+            <div class="tabooHead">⛔ TABOO WORDS <small>Don't say these words!</small></div>
+            <ul class="tabooList" id="tabooList"></ul>
+          </div>
+          <div class="hiddenNote" id="hiddenNote" style="display:none">🙈 Taboo words are hidden</div>
+          <div class="cardBtns">
+            <button id="toggleTabooBtn" type="button" class="primary">🙈 Hide Taboo Words</button>
+          </div>
+        </div>
+
+        <div class="card" id="endBox">
+          <h2>🎉 All cards used!</h2>
+          <p>You have seen every card in this category.<br>Shuffle the cards to play again (the scores stay).</p>
+          <div class="cardBtns">
+            <button class="primary" id="againBtn" type="button">🔀 Shuffle &amp; Play Again</button>
+          </div>
+        </div>
+
+        <div class="navBtns">
+          <button id="prevBtn" type="button">◀ Previous</button>
+          <button id="skipBtn" type="button">⏭ Skip Card</button>
+          <button id="nextBtn" type="button">Next Card ▶</button>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="teams">
+          <div class="team A">
+            <h3>Team A</h3>
+            <div class="score" id="scoreA">0</div>
+            <button class="plus" data-team="A" type="button">+1 Point</button>
+            <button class="minus" data-team="A" type="button">−1 (correction)</button>
+          </div>
+          <div class="team B">
+            <h3>Team B</h3>
+            <div class="score" id="scoreB">0</div>
+            <button class="plus" data-team="B" type="button">+1 Point</button>
+            <button class="minus" data-team="B" type="button">−1 (correction)</button>
+          </div>
+        </div>
+
+        <div class="box timerBox">
+          <h3>⏱ Timer</h3>
+          <div id="timeDisplay">1:00</div>
+          <div class="timerBtns">
+            <button class="primary" id="timerStartBtn" type="button">▶ Start</button>
+            <button id="timerResetBtn" type="button">↺ Reset</button>
+          </div>
+          <div class="durRowSmall" id="durRowGame"></div>
+        </div>
+
+        <div class="box stats" id="stats">Guessed: 0 · Skipped: 0</div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<div id="timesUp" role="alertdialog" aria-label="Time is up">
+  <div>⏰ TIME'S UP!</div>
+  <button class="primary" id="timesUpClose" type="button">OK – next team</button>
+</div>
+
+<div class="modal" id="plModal" role="dialog" aria-label="Instrukcja po polsku">
+  <div class="modalInner">
+    <h2>🇵🇱 Jak grać?</h2>
+    <ol>
+      <li>Klasa dzieli się na dwie drużyny: <b>Team A</b> i <b>Team B</b>.</li>
+      <li>Jedna osoba z drużyny opisuje <b>po angielsku</b> hasło widoczne na karcie.</li>
+      <li>Nie wolno używać samego hasła ani <b>słów zakazanych (TABOO WORDS)</b>. Nie wolno też pokazywać, literować hasła ani mówić po polsku.</li>
+      <li>Jeśli drużyna odgadnie hasło, kliknij <b>+1 Point</b> przy tej drużynie – gra sama przejdzie do następnej karty.</li>
+      <li>Jeśli padło słowo zakazane albo hasło jest za trudne, kliknij <b>Skip Card</b> (bez punktu).</li>
+      <li><b>Timer</b>: wybierz 30, 45 lub 60 sekund i kliknij Start. Gdy czas się skończy, zmienia się drużyna.</li>
+      <li>Przycisk <b>−1</b> służy tylko do poprawienia pomyłki w punktacji.</li>
+      <li>Karty się nie powtarzają, dopóki nie zostaną wykorzystane wszystkie karty z wybranej kategorii.</li>
+    </ol>
+    <p><b>Dźwięk:</b> 🎵 <b>Music</b> włącza i wyłącza klimatyczną muzykę w tle. 🔊 <b>Sounds</b> włącza i wyłącza efekty: „ding” przy +1 Point, „buzz” przy Skip Card, tykanie w ostatnich 10 sekundach i sygnał końca czasu. Muzyka startuje dopiero po kliknięciu przycisku (tak działają przeglądarki).</p>
+    <p><b>Skróty klawiszowe:</b> → następna karta, ← poprzednia karta, T – pokaż/ukryj słowa zakazane.</p>
+    <button class="primary" id="plClose" type="button">Zamknij / Close</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+/* ===================== CARDS (50) ===================== */
+var CARDS = [
+  // ---------- CATEGORY 1: HALLOWEEN (20) ----------
+  {w:"pumpkin",        c:"halloween", t:["orange","vegetable","face","carve","lantern"]},
+  {w:"ghost",          c:"halloween", t:["white","sheet","dead","spirit","boo"]},
+  {w:"witch",          c:"halloween", t:["hat","broom","magic","woman","spell"]},
+  {w:"vampire",        c:"halloween", t:["blood","teeth","Dracula","bite","night"]},
+  {w:"skeleton",       c:"halloween", t:["bones","body","dead","skull","white"]},
+  {w:"haunted house",  c:"halloween", t:["ghosts","scary","building","home","live"]},
+  {w:"costume",        c:"halloween", t:["clothes","wear","dress up","party","Halloween"]},
+  {w:"mask",           c:"halloween", t:["face","cover","eyes","wear","hide"]},
+  {w:"spider",         c:"halloween", t:["eight","legs","web","insect","small"]},
+  {w:"bat",            c:"halloween", t:["fly","night","black","wings","animal"]},
+  {w:"candle",         c:"halloween", t:["fire","light","wax","burn","birthday"]},
+  {w:"broom",          c:"halloween", t:["witch","fly","clean","floor","stick"]},
+  {w:"monster",        c:"halloween", t:["scary","big","ugly","creature","bed"]},
+  {w:"trick or treat", c:"halloween", t:["sweets","door","knock","children","candy"]},
+  {w:"sweets",         c:"halloween", t:["sugar","chocolate","candy","eat","teeth"]},
+  {w:"scary",          c:"halloween", t:["afraid","fear","frightening","horror","film"]},
+  {w:"full moon",      c:"halloween", t:["night","sky","round","wolf","white"]},
+  {w:"black cat",      c:"halloween", t:["animal","dark","bad luck","pet","witch"]},
+  {w:"zombie",         c:"halloween", t:["dead","walk","brains","eat","film"]},
+  {w:"haunted castle", c:"halloween", t:["ghost","king","old","scary","walls"]},
+
+  // ---------- CATEGORY 2: EVERYDAY LIFE (20) ----------
+  {w:"school",         c:"everyday",  t:["students","teacher","learn","lessons","class"]},
+  {w:"homework",       c:"everyday",  t:["school","teacher","after","exercises","do"]},
+  {w:"smartphone",     c:"everyday",  t:["call","mobile","screen","apps","internet"]},
+  {w:"headphones",     c:"everyday",  t:["ears","music","listen","wear","loud"]},
+  {w:"friendship",     c:"everyday",  t:["best","people","together","trust","love"]},
+  {w:"weekend",        c:"everyday",  t:["Saturday","Sunday","free","days","relax"]},
+  {w:"shopping",       c:"everyday",  t:["buy","money","mall","clothes","store"]},
+  {w:"breakfast",      c:"everyday",  t:["morning","eat","food","first","cereal"]},
+  {w:"bicycle",        c:"everyday",  t:["bike","ride","wheels","two","pedal"]},
+  {w:"cinema",         c:"everyday",  t:["film","movie","watch","popcorn","screen"]},
+  {w:"holiday",        c:"everyday",  t:["summer","travel","sea","vacation","hotel"]},
+  {w:"teacher",        c:"everyday",  t:["school","students","lesson","class","job"]},
+  {w:"exam",           c:"everyday",  t:["test","school","questions","marks","study"]},
+  {w:"birthday",       c:"everyday",  t:["party","cake","presents","born","candles"]},
+  {w:"music",          c:"everyday",  t:["songs","listen","singer","band","radio"]},
+  {w:"sports",         c:"everyday",  t:["football","play","ball","team","exercise"]},
+  {w:"library",        c:"everyday",  t:["books","read","borrow","quiet","school"]},
+  {w:"bus stop",       c:"everyday",  t:["wait","street","ticket","transport","station"]},
+  {w:"bedroom",        c:"everyday",  t:["sleep","night","pillow","wardrobe","house"]},
+  {w:"computer game",  c:"everyday",  t:["play","screen","console","fun","level"]},
+
+  // ---------- CATEGORY 3: FEELINGS, PEOPLE & PLACES (10) ----------
+  {w:"excited",        c:"feelings",  t:["happy","can't wait","party","energy","looking forward"]},
+  {w:"frightened",     c:"feelings",  t:["scared","afraid","fear","horror","dark"]},
+  {w:"tired",          c:"feelings",  t:["sleep","energy","bed","rest","exhausted"]},
+  {w:"friendly",       c:"feelings",  t:["nice","kind","smile","people","help"]},
+  {w:"neighbour",      c:"feelings",  t:["next door","live","house","street","near"]},
+  {w:"stranger",       c:"feelings",  t:["know","person","new","meet","unknown"]},
+  {w:"hospital",       c:"feelings",  t:["doctor","nurse","ill","sick","ambulance"]},
+  {w:"supermarket",    c:"feelings",  t:["shop","food","buy","trolley","money"]},
+  {w:"playground",     c:"feelings",  t:["children","park","swing","slide","outside"]},
+  {w:"restaurant",     c:"feelings",  t:["eat","food","menu","waiter","dinner"]}
+];
+
+var CATS = {
+  all:       {name:"All categories",            icon:"⭐"},
+  halloween: {name:"Halloween",                 icon:"🎃"},
+  everyday:  {name:"Everyday Life",             icon:"🏫"},
+  feelings:  {name:"Feelings, People & Places", icon:"💬"}
+};
+
+/* ===================== STATE ===================== */
+var state = {
+  cat: "all",
+  deck: [],          // indexes into CARDS, in play order (no repeats)
+  pos: 0,            // current position in deck
+  scored: {},        // pos -> "A"/"B" (prevents double points on Previous)
+  skippedSet: {},    // pos -> true
+  scores: {A:0, B:0},
+  showTaboo: true,
+  started: false
+};
+var timer = {dur:60, left:60, running:false, end:0, iv:null, lastSec:null};
+
+function $(id){ return document.getElementById(id); }
+
+function shuffle(arr){
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function poolFor(cat){
+  var out = [];
+  for (var i = 0; i < CARDS.length; i++) if (cat === "all" || CARDS[i].c === cat) out.push(i);
+  return out;
+}
+function buildDeck(){
+  state.deck = shuffle(poolFor(state.cat));
+  state.pos = 0; state.scored = {}; state.skippedSet = {};
+}
+
+/* ===================== RENDER ===================== */
+function render(){
+  var len = state.deck.length;
+  var atEnd = state.pos >= len;
+  $("cardBox").style.display = atEnd ? "none" : "flex";
+  $("endBox").style.display = atEnd ? "flex" : "none";
+  $("counter").textContent = atEnd ? ("Done: " + len + " / " + len) : ("Card " + (state.pos + 1) + " / " + len);
+  $("prevBtn").disabled = state.pos === 0;
+  $("nextBtn").disabled = atEnd; $("skipBtn").disabled = atEnd;
+  $("prevBtn").style.opacity = state.pos === 0 ? .45 : 1;
+  $("nextBtn").style.opacity = atEnd ? .45 : 1; $("skipBtn").style.opacity = atEnd ? .45 : 1;
+
+  if (atEnd) {
+    document.body.setAttribute("data-cat", state.cat);
+  } else {
+    var card = CARDS[state.deck[state.pos]];
+    document.body.setAttribute("data-cat", card.c);
+    $("cardCat").textContent = CATS[card.c].icon + " " + CATS[card.c].name;
+    $("cardWord").textContent = card.w;
+    var ul = $("tabooList"); ul.innerHTML = "";
+    for (var i = 0; i < card.t.length; i++) {
+      var li = document.createElement("li"); li.textContent = card.t[i]; ul.appendChild(li);
+    }
+    $("tabooBox").style.display = state.showTaboo ? "block" : "none";
+    $("hiddenNote").style.display = state.showTaboo ? "none" : "block";
+    $("toggleTabooBtn").textContent = state.showTaboo ? "🙈 Hide Taboo Words" : "👀 Show Taboo Words";
+    var s = state.scored[state.pos];
+    $("cardBox").style.boxShadow = s ? "0 0 0 6px " + (s === "A" ? "var(--teamA)" : "var(--teamB)") : "";
+  }
+  $("scoreA").textContent = state.scores.A;
+  $("scoreB").textContent = state.scores.B;
+  var g = 0, k = 0, p;
+  for (p in state.scored) g++;
+  for (p in state.skippedSet) if (!state.scored[p]) k++;
+  $("stats").textContent = "Guessed: " + g + " · Skipped: " + k + " · Left: " + Math.max(0, len - state.pos);
+}
+
+/* ===================== ACTIONS ===================== */
+function next(){ if (state.pos < state.deck.length) { state.pos++; render(); } }
+function prev(){ if (state.pos > 0) { state.pos--; render(); } }
+function skip(){
+  if (state.pos >= state.deck.length) return;
+  if (!state.scored[state.pos]) state.skippedSet[state.pos] = true;
+  sfx("buzz");
+  next();
+}
+function award(team){
+  if (!state.started) return;
+  if (state.pos >= state.deck.length) { toast("No card on screen – shuffle to play again."); return; }
+  if (state.scored[state.pos]) { toast("A point was already given for this card."); return; }
+  state.scores[team]++;
+  state.scored[state.pos] = team;
+  delete state.skippedSet[state.pos];
+  sfx("ding");
+  toast("+1 point for Team " + team + "! ✅");
+  next();
+}
+function minus(team){
+  if (state.scores[team] > 0) { state.scores[team]--; render(); toast("−1 for Team " + team); }
+}
+function reshuffle(msg){
+  buildDeck(); render();
+  if (msg) toast(msg);
+}
+function changeCategory(cat){
+  state.cat = cat;
+  $("catSelect").value = cat;
+  reshuffle("Category: " + CATS[cat].name + " (" + state.deck.length + " cards)");
+}
+function toggleTaboo(){ state.showTaboo = !state.showTaboo; render(); }
+
+function startGame(){
+  state.started = true;
+  buildDeck();
+  $("startScreen").style.display = "none";
+  $("gameScreen").style.display = "block";
+  $("catSelect").value = state.cat;
+  timerReset();
+  render();
+  window.scrollTo(0, 0);
+}
+function resetGame(){
+  if (!confirm("Reset the game? Scores and the timer will be cleared.\n\nZresetować grę? Punkty i timer zostaną wyzerowane.")) return;
+  state.scores = {A:0, B:0};
+  state.started = false;
+  timerReset();
+  $("gameScreen").style.display = "none";
+  $("startScreen").style.display = "block";
+  document.body.setAttribute("data-cat", state.cat);
+  window.scrollTo(0, 0);
+}
+
+/* ===================== TIMER ===================== */
+function fmt(sec){
+  var s = Math.ceil(sec), m = Math.floor(s / 60), r = s % 60;
+  return m + ":" + (r < 10 ? "0" : "") + r;
+}
+function timerDraw(){
+  var d = $("timeDisplay");
+  d.textContent = fmt(timer.left);
+  d.className = timer.left <= 0 ? "over" : (timer.left <= 10 ? "low" : "");
+  $("timerStartBtn").textContent = timer.running ? "⏸ Pause" : "▶ Start";
+}
+function timerStartPause(){
+  if (timer.running) {
+    timer.left = Math.max(0, (timer.end - Date.now()) / 1000);
+    clearInterval(timer.iv); timer.running = false; timerDraw(); return;
+  }
+  if (timer.left <= 0) timer.left = timer.dur;
+  timer.end = Date.now() + timer.left * 1000;
+  timer.running = true;
+  timer.lastSec = Math.ceil(timer.left);
+  timer.iv = setInterval(timerTick, 200);
+  timerDraw();
+}
+function timerTick(){
+  timer.left = Math.max(0, (timer.end - Date.now()) / 1000);
+  if (timer.left <= 0) {
+    clearInterval(timer.iv); timer.running = false; timer.left = 0;
+    timerDraw(); beep();
+    $("timesUp").style.display = "flex";
+    return;
+  }
+  var sec = Math.ceil(timer.left);
+  if (sec !== timer.lastSec) { timer.lastSec = sec; if (sec <= 10) sfx("tick"); }
+  timerDraw();
+}
+function timerReset(){
+  clearInterval(timer.iv); timer.running = false; timer.left = timer.dur; timerDraw();
+}
+function setDuration(sec){
+  timer.dur = sec; timerReset(); markDurations();
+}
+function markDurations(){
+  var btns = document.querySelectorAll(".durBtn");
+  for (var i = 0; i < btns.length; i++)
+    btns[i].classList.toggle("sel", Number(btns[i].getAttribute("data-sec")) === timer.dur);
+}
+/* ===================== SOUND (generated in the browser, works offline) ===================== */
+var audioCtx = null;
+var sfxOn = true;
+function ac(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  } catch (e) { return null; }
+}
+function mtof(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+// one note with a soft envelope
+function tone(freq, start, dur, type, vol, dest, endFreq){
+  var c = ac(); if (!c) return;
+  var o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, start);
+  if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(g); g.connect(dest || c.destination);
+  o.start(start); o.stop(start + dur + 0.05);
+}
+function sfx(kind){
+  if (!sfxOn) return;
+  var c = ac(); if (!c) return;
+  var t = c.currentTime;
+  if (kind === "ding") {            // +1 point
+    tone(880, t, 0.25, "sine", 0.25);
+    tone(1318.5, t + 0.12, 0.45, "sine", 0.25);
+  } else if (kind === "buzz") {     // skip card
+    tone(150, t, 0.35, "sawtooth", 0.12, null, 90);
+  } else if (kind === "tick") {     // last 10 seconds
+    tone(1500, t, 0.05, "square", 0.08);
+  } else if (kind === "end") {      // time's up
+    [0, 0.35, 0.7].forEach(function(d){ tone(660, t + d, 0.3, "square", 0.15); });
+  }
+}
+function beep(){ sfx("end"); }
+
+// Background music: a spooky minor-key loop with a slow bass line
+var music = {on:false, iv:null, step:0, next:0, master:null};
+var MELODY = [57,60,64,63, 64,60,57,56, 57,60,64,65, 64,63,60,59];
+var BASS   = [45,45,41,40];
+var STEP   = 0.42;   // seconds per melody note
+function musicSchedule(){
+  var c = audioCtx;
+  while (music.next < c.currentTime + 0.4) {
+    var s = music.step % 16;
+    tone(mtof(MELODY[s]), music.next, STEP * 1.2, "triangle", 0.07, music.master);
+    if (s % 4 === 0) {
+      tone(mtof(BASS[(s / 4) % 4]), music.next, STEP * 4, "sine", 0.10, music.master);
+    }
+    if (s === 7 || s === 15) {      // eerie high "ghost" note
+      tone(mtof(MELODY[s] + 24), music.next, STEP * 2, "sine", 0.025, music.master);
+    }
+    music.next += STEP; music.step++;
+  }
+}
+function musicStart(){
+  var c = ac(); if (!c) { toast("Sound is not available on this device."); return false; }
+  music.master = c.createGain();
+  music.master.gain.setValueAtTime(0.0001, c.currentTime);
+  music.master.gain.exponentialRampToValueAtTime(0.8, c.currentTime + 1);
+  music.master.connect(c.destination);
+  music.step = 0; music.next = c.currentTime + 0.1;
+  musicSchedule();
+  music.iv = setInterval(musicSchedule, 100);
+  return true;
+}
+function musicStop(){
+  clearInterval(music.iv); music.iv = null;
+  if (music.master && audioCtx) {
+    var m = music.master, t = audioCtx.currentTime;
+    m.gain.cancelScheduledValues(t);
+    m.gain.setValueAtTime(m.gain.value || 0.8, t);
+    m.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    setTimeout(function(){ try { m.disconnect(); } catch (e) {} }, 600);
+  }
+  music.master = null;
+}
+function toggleMusic(){
+  if (music.on) { musicStop(); music.on = false; }
+  else { music.on = musicStart(); }
+  $("musicBtn").textContent = music.on ? "🎵 Music: On" : "🎵 Music: Off";
+  $("musicBtn").setAttribute("aria-pressed", music.on ? "true" : "false");
+}
+function toggleSfx(){
+  sfxOn = !sfxOn;
+  $("sfxBtn").textContent = sfxOn ? "🔊 Sounds: On" : "🔇 Sounds: Off";
+  $("sfxBtn").setAttribute("aria-pressed", sfxOn ? "true" : "false");
+  if (sfxOn) sfx("ding");
+}
+
+/* ===================== TOAST ===================== */
+var toastT = null;
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toastT); toastT = setTimeout(function(){ t.style.display = "none"; }, 1600);
+}
+
+/* ===================== BUILD UI ===================== */
+function buildUI(){
+  var grid = $("catGrid"), sel = $("catSelect");
+  ["all","halloween","everyday","feelings"].forEach(function(key){
+    var n = poolFor(key).length;
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "catBtn" + (key === state.cat ? " sel" : "");
+    b.setAttribute("data-cat", key);
+    b.innerHTML = CATS[key].icon + " " + CATS[key].name + "<small>" + n + " cards</small>";
+    b.onclick = function(){
+      state.cat = key;
+      var all = grid.querySelectorAll(".catBtn");
+      for (var i = 0; i < all.length; i++) all[i].classList.remove("sel");
+      b.classList.add("sel");
+      document.body.setAttribute("data-cat", key);
+    };
+    grid.appendChild(b);
+    var o = document.createElement("option");
+    o.value = key; o.textContent = CATS[key].icon + " " + CATS[key].name + " (" + n + ")";
+    sel.appendChild(o);
+  });
+  sel.onchange = function(){ changeCategory(sel.value); };
+
+  [["durRowStart",""],["durRowGame","small"]].forEach(function(row){
+    [30,45,60].forEach(function(sec){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "durBtn " + row[1];
+      b.setAttribute("data-sec", sec); b.textContent = sec + " s";
+      b.onclick = function(){ setDuration(sec); };
+      $(row[0]).appendChild(b);
+    });
+  });
+  markDurations();
+
+  $("startBtn").onclick = startGame;
+  $("nextBtn").onclick = next;
+  $("prevBtn").onclick = prev;
+  $("skipBtn").onclick = skip;
+  $("shuffleBtn").onclick = function(){ reshuffle("Cards shuffled! 🔀 (" + state.deck.length + " cards)"); };
+  $("againBtn").onclick = function(){ reshuffle("New round – cards shuffled! 🔀"); };
+  $("toggleTabooBtn").onclick = toggleTaboo;
+  $("resetBtn").onclick = resetGame;
+  $("timerStartBtn").onclick = timerStartPause;
+  $("timerResetBtn").onclick = timerReset;
+  $("timesUpClose").onclick = function(){ $("timesUp").style.display = "none"; timerReset(); };
+  $("musicBtn").onclick = toggleMusic;
+  $("sfxBtn").onclick = toggleSfx;
+  $("plBtn").onclick = function(){ $("plModal").style.display = "flex"; };
+  $("plClose").onclick = function(){ $("plModal").style.display = "none"; };
+  $("plModal").onclick = function(e){ if (e.target === this) this.style.display = "none"; };
+
+  var plus = document.querySelectorAll(".team .plus");
+  for (var i = 0; i < plus.length; i++) plus[i].onclick = function(){ award(this.getAttribute("data-team")); };
+  var mins = document.querySelectorAll(".team .minus");
+  for (var j = 0; j < mins.length; j++) mins[j].onclick = function(){ minus(this.getAttribute("data-team")); };
+
+  document.addEventListener("keydown", function(e){
+    if (!state.started || $("gameScreen").style.display === "none") return;
+    if (e.target && e.target.tagName === "SELECT") return;
+    if (e.key === "ArrowRight") next();
+    else if (e.key === "ArrowLeft") prev();
+    else if (e.key === "t" || e.key === "T") toggleTaboo();
+  });
+}
+
+buildUI();
+timerDraw();
+</script>
+</body>
+</html>
